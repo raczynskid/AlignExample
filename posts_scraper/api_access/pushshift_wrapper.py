@@ -6,9 +6,7 @@ import datetime
 
 class PushshiftScraper:
     def __init__(self, **kwargs):
-        self.data = self.convert_dates(self.paginate_by_utc(**kwargs)).sort_values(
-                                                                                                    by="created_utc",
-                                                                                                    ascending=False)
+        self.data = self.convert_dates(self.paginate_by_utc(**kwargs)).sort_values(by="created_utc", ascending=False)
 
     def paginate_by_utc(self, queries: list, days: int, interval: int) -> pd.DataFrame:
         """
