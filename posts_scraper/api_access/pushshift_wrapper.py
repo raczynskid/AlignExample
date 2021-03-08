@@ -30,11 +30,15 @@ class PushshiftScraper:
             for _ in range((24//interval) * days):
                 before = after - interval
                 url = f"https://api.pushshift.io/reddit/comment/search/?q={query}&after={after}h&before={before}h&sort=asc&size=100&fields=author,author_flair_text,body,comment_type,created_utc,id,link_id,permalink,score,subreddit,subreddit_id"
-                df = pd.json_normalize(json.loads(requests.get(url).text), record_path='data')
-                time.sleep(1)
-                if len(df) > 0:
-                    print(len(df))
-                    data_chunks.append(df)
+                try:
+                    df = pd.json_normalize(json.loads(requests.get(url).text), record_path='data')
+                    if df is not None:
+                        time.sleep(1)
+                    if len(df) > 0:
+                        print(len(df))
+                        data_chunks.append(df)
+                except:
+                    pass
 
                 after += interval
 
