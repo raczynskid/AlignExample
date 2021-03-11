@@ -48,18 +48,19 @@ class SentimentAnalyzer:
         self.blobs = words
 
     def basic_stats(self):
-        if self.blobs is None:
-            self.load_blobs()
-        d = {}
-        for sub, blob in self.blobs.items():
-            d[sub] = nltk.FreqDist([w.lower() for w in blob
-                                    if (w.lower() not in self.stopwords)
-                                    and (w.isalpha())
-                                    and (w.lower() != "invisalign")]).most_common(5)
+        if not self.tweeter:
+            if self.blobs is None:
+                self.load_blobs()
+            d = {}
+            for sub, blob in self.blobs.items():
+                d[sub] = nltk.FreqDist([w.lower() for w in blob
+                                        if (w.lower() not in self.stopwords)
+                                        and (w.isalpha())
+                                        and (w.lower() != "invisalign")]).most_common(5)
 
 
-        self.word_counts = pd.DataFrame.from_dict(d, orient="index")
-        return self.word_counts
+            self.word_counts = pd.DataFrame.from_dict(d, orient="index")
+            return self.word_counts
 
     def twitter_basic_stats(self):
         if "retweets" in self.data.columns:
@@ -91,19 +92,19 @@ class SentimentAnalyzer:
     def export_to_db(self, db_path):
         con = sqlite3.connect(db_path)
         if self.tweeter:
-            self.data.to_sql(name="twitter_data", con=con, index=False)
-            self.word_counts.to_sql(name="twitter_wordcount", con=con, index=False)
+            self.data.to_sql(name="twitter_data", con=con)
+            self.word_counts.to_sql(name="twitter_wordcount", con=con)
         else:
-            self.data.to_sql(name="reddit_data", con=con, index=False)
-            self.sub_counts.to_sql(name="reddit_sub_counts", con=con, index=False)
-            self.word_counts.applymap(str).to_sql(name="reddit_word_counts", con=con, index=False)
+            self.data.to_sql(name="reddit_data", con=con)
+            self.sub_counts.to_sql(name="reddit_sub_counts", con=con)
+            self.word_counts.applymap(str).to_sql(name="reddit_word_counts", con=con)
         con.close()
 
 def save_result_cache():
 
     reddit, twitter = import_corpora(r"D:\Python\Align\posts_scraper\cache.db")
 
-    for dataset in [reddit]:
+    for dataset in [reddit, twitter]:
         sa = SentimentAnalyzer(dataset)
         print(sa.data.head(10))
         sa.basic_cleaning()
