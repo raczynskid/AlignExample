@@ -2,7 +2,9 @@ import nltk
 import sqlite3
 import pandas as pd
 import os
+from posts_scraper.Scraper import import_corpora
 from nltk.sentiment import SentimentIntensityAnalyzer
+
 
 class SentimentAnalyzer:
     def __init__(self, data: pd.DataFrame):
@@ -11,8 +13,13 @@ class SentimentAnalyzer:
         self.data = data
         self.blobs = None
 
+    def basic_cleaning(self):
+        self.data["body"].apply(lambda x: x.replace(r"\n", " "))
+        self.data["body"].apply(lambda x: x.replace(r"  ", " "))
+
     def calculate_sentiment(self):
         self.data["polarity_score"] = self.data["body"].apply(lambda x: self.sia.polarity_scores(x)["compound"])
+        self.apply_weights()
 
     def load_blobs(self):
         # group by subs
@@ -23,7 +30,6 @@ class SentimentAnalyzer:
         for subreddit, df in subreddit_groups:
             # tokenize into wordlists per subreddit, drop stopwords
             words[subreddit] = nltk.word_tokenize(" ".join(df["body"].tolist()))
-
 
         self.blobs = words
 
@@ -38,18 +44,19 @@ class SentimentAnalyzer:
 
         return d
 
+    def apply_weights(self):
+        self.data["weighted_polarity_score"] = self.data["polarity_score"] * self.data["score"]
 
-def import_corpora():
-    # load posts data from cache
+    def subreddit_counts(self, include_default_sub=True):
+        if include_default_sub:
+            return self.data["subreddit"].value_counts()
+        else:
+            return self.data.loc[self.data["subreddit"] != "Invisalign"]["subreddit"].value_counts()
 
-    con = sqlite3.connect(os.path.abspath("./posts_scraper/cache.db"))
-    reddit = pd.read_sql("SELECT * FROM reddit_data", con)
-    twitter = pd.read_sql("SELECT * FROM twitter_data", con)
-    con.close()
+if __name__ == '__main__':
 
-    return reddit, twitter
+    reddit, twitter = import_corpora("posts_scraper/cache.db")
+    sa = SentimentAnalyzer(reddit)
 
-reddit, twitter = import_corpora()
-sa = SentimentAnalyzer(reddit)
+    t = sa.subreddit_counts(include_default_sub=False)
 
-print(sa.basic_stats())
