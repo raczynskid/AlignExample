@@ -32,6 +32,4 @@ def import_corpora(db: str):
 
 
 if __name__ == '__main__':
-    #reddit, twitter = import_corpora("D:\Python\Align\posts_scraper\cache.db")
-    reddit, twitter = scrape()
-    cache(db="cache.db", ps=reddit)
+    reddit, twitter = import_corpora("D:\Python\Align\posts_scraper\cache.db")
