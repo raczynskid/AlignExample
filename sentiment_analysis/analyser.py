@@ -2,6 +2,42 @@ import nltk
 import sqlite3
 import pandas as pd
 import os
+from nltk.sentiment import SentimentIntensityAnalyzer
+
+class SentimentAnalyzer:
+    def __init__(self, data: pd.DataFrame):
+        self.sia = SentimentIntensityAnalyzer()
+        self.stopwords = nltk.corpus.stopwords.words("english")
+        self.data = data
+        self.blobs = None
+
+    def calculate_sentiment(self):
+        self.data["polarity_score"] = self.data["body"].apply(lambda x: self.sia.polarity_scores(x)["compound"])
+
+    def load_blobs(self):
+        # group by subs
+        subreddit_groups = self.data.groupby(by="subreddit")
+
+        # create text blobs per sub
+        words = {}
+        for subreddit, df in subreddit_groups:
+            # tokenize into wordlists per subreddit, drop stopwords
+            words[subreddit] = nltk.word_tokenize(" ".join(df["body"].tolist()))
+
+
+        self.blobs = words
+
+    def basic_stats(self):
+        if self.blobs is None:
+            self.load_blobs()
+        d = {}
+        for sub, blob in self.blobs.items():
+            d[sub] = nltk.FreqDist([w for w in blob
+                                    if (w.lower() not in self.stopwords)
+                                    and (w.isalpha())]).most_common(5)
+
+        return d
+
 
 def import_corpora():
     # load posts data from cache
@@ -13,16 +49,7 @@ def import_corpora():
 
     return reddit, twitter
 
-def tst():
+reddit, twitter = import_corpora()
+sa = SentimentAnalyzer(reddit)
 
-    stopwords = nltk.corpus.stopwords.words("english")
-    words = [w for w in nltk.corpus.state_union.words() if w.isalpha()] # split into words
-    words = [w for w in words if w.lower() not in stopwords] # remove stopwords
-
-    fd = nltk.FreqDist(words) # frequency distribution
-    fd.most_common(3)
-    fd.tabulate(5)
-
-    lower_fd = nltk.FreqDist([w.lower() for w in fd])
-
-import_corpora()
+print(sa.basic_stats())

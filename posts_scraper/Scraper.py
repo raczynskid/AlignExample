@@ -11,9 +11,10 @@ def scrape():
 
 
 def cache(ps, ts):
-    con = sqlite3.connect("cache.db")
+    con = sqlite3.connect("cache2.db")
     ps.to_sql(name="reddit_data", con=con, if_exists="append")
     ts.to_sql(name="twitter_data", con=con, if_exists="append")
+    con.close()
 
 if __name__ == '__main__':
     ps, ts = scrape()
