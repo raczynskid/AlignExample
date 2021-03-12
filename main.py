@@ -1,6 +1,3 @@
-from posts_scraper import Scraper
+from sentiment_analysis import analyser
 
-
-if __name__ == '__main__':
-    ps, ts = Scraper.scrape()
-    Scraper.cache(ps, ts)
+analyser.save_result_cache()
